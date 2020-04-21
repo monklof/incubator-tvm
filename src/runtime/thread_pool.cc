@@ -18,7 +18,6 @@
  */
 
 /*!
- *  Copyright (c) 2017 by Contributors
  * \file thread_pool.cc
  * \brief Threadpool for multi-threading runtime.
  */
@@ -106,16 +105,14 @@ class ParallelLauncher {
       tvm::runtime::threading::Yield();
     }
     if (!has_error_.load()) return 0;
-    // the following is intended to use string due to
-    // security issue raised in SGX backend
-    std::string err("");
+    std::ostringstream os;
     for (size_t i = 0; i < par_errors_.size(); ++i) {
       if (par_errors_[i].length() != 0) {
-        err += "Task " + std::to_string(i) + " error: " + par_errors_[i] + '\n';
+        os << "Task " << i << " error: " << par_errors_[i] << '\n';
         par_errors_[i].clear();
       }
     }
-    TVMAPISetLastError(err.c_str());
+    TVMAPISetLastError(os.str().c_str());
     return -1;
   }
   // Signal that one job has finished.
@@ -283,6 +280,10 @@ class ThreadPool {
       // The SpscTaskQueue only hosts ONE item at a time
       queues_.emplace_back(std::unique_ptr<SpscTaskQueue>(new SpscTaskQueue()));
     }
+    const char* exclude_worker0 = getenv("TVM_EXCLUDE_WORKER0");
+    if (exclude_worker0 && atoi(exclude_worker0) == 0) {
+      exclude_worker0_ = false;
+    }
     threads_ = std::unique_ptr<tvm::runtime::threading::ThreadGroup>(
         new tvm::runtime::threading::ThreadGroup(
           num_workers_, [this](int worker_id) { this->RunWorker(worker_id); },
@@ -369,12 +370,8 @@ class ThreadPool {
   int num_workers_;
   // number of workers used (can be restricted with affinity pref)
   int num_workers_used_;
-  // if excluding worker 0 and using master to run task 0
-#ifndef _LIBCPP_SGX_CONFIG
+  // if or not to exclude worker 0 and use master to run task 0
   bool exclude_worker0_{true};
-#else
-  bool exclude_worker0_{false};
-#endif
   std::vector<std::unique_ptr<SpscTaskQueue> > queues_;
   std::unique_ptr<tvm::runtime::threading::ThreadGroup> threads_;
 };
@@ -409,12 +406,6 @@ int TVMBackendParallelLaunch(
   {
     TVMParallelGroupEnv env;
     env.num_task = num_task;
-    std::atomic<int32_t>* sync_counter = new std::atomic<int>[num_task * tvm::runtime::kSyncStride];
-    for (int i = 0; i < num_task; ++i) {
-      sync_counter[i * tvm::runtime::kSyncStride].store(
-          0, std::memory_order_relaxed);
-    }
-    env.sync_handle = sync_counter;
     (*flambda)(omp_get_thread_num(), &env, cdata);
   }
   return 0;
