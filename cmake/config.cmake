@@ -46,7 +46,7 @@
 # - ON: enable CUDA with cmake's auto search
 # - OFF: disable CUDA
 # - /path/to/cuda: use specific path to cuda toolkit
-set(USE_CUDA OFF)
+set(USE_CUDA /usr/local/cuda)
 
 # Whether enable ROCM runtime
 #
@@ -115,7 +115,7 @@ set(USE_MICRO_STANDALONE_RUNTIME OFF)
 # - ON: enable llvm with cmake's find search
 # - OFF: disable llvm
 # - /path/to/llvm-config: enable specific LLVM when multiple llvm-dev is available.
-set(USE_LLVM OFF)
+set(USE_LLVM /usr/local/bin/llvm-config)
 
 #---------------------------------------------
 # Contrib libraries
@@ -174,7 +174,7 @@ set(USE_FLATBUFFERS_PATH none)
 set(USE_EDGETPU OFF)
 
 # Whether use CuDNN
-set(USE_CUDNN OFF)
+set(USE_CUDNN /usr/local/cuda/lib64)
 
 # Whether use cuBLAS
 set(USE_CUBLAS OFF)
@@ -223,7 +223,7 @@ set(USE_ETHOSN_HW OFF)
 # - ON: enable ANTLR by searching default locations (cmake find_program for antlr4 and /usr/local for jar)
 # - OFF: disable ANTLR
 # - /path/to/antlr-*-complete.jar: path to specific ANTLR jar file
-set(USE_ANTLR OFF)
+set(USE_ANTLR ON)
 
 # Whether use Relay debug mode
 set(USE_RELAY_DEBUG OFF)
